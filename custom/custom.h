@@ -26,6 +26,8 @@ void electricity_timer_cb(lv_timer_t * t);
 int mqtt_init_and_start(lv_ui *ui);
 void mqtt_stop_and_deinit(void);
 mqtt_sensor_data_t* mqtt_get_sensor_data(void);
+mqtt_zigbee_data_t* mqtt_get_zigbee_data(void);
+mqtt_client_t* mqtt_get_client(void);
 
 
 #ifdef __cplusplus

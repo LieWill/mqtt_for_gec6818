@@ -27,14 +27,10 @@ void Home_datetext_date_event_handler(lv_event_t *e);
 void Home_datetext_date_calendar_event_handler(lv_event_t *e);
 void Home_datetext_date_init_calendar(lv_obj_t *obj, char * s);
 void Home_digital_clock_time_timer(lv_timer_t *timer);
-void Electricity_digital_clock_time_timer(lv_timer_t *timer);
-void Electricity_datetext_date_event_handler(lv_event_t *e);
-void Electricity_datetext_date_calendar_event_handler(lv_event_t *e);
-void Electricity_datetext_date_init_calendar(lv_obj_t *obj, char * s);
-void Firefighting_digital_clock_time_timer(lv_timer_t *timer);
-void Firefighting_datetext_date_event_handler(lv_event_t *e);
-void Firefighting_datetext_date_calendar_event_handler(lv_event_t *e);
-void Firefighting_datetext_date_init_calendar(lv_obj_t *obj, char * s);
+void zigbee_datetext_date_event_handler(lv_event_t *e);
+void zigbee_datetext_date_calendar_event_handler(lv_event_t *e);
+void zigbee_datetext_date_init_calendar(lv_obj_t *obj, char * s);
+void zigbee_digital_clock_time_timer(lv_timer_t *timer);
 
 #ifdef __cplusplus
 }

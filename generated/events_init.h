@@ -19,8 +19,7 @@ extern "C" {
 void events_init(lv_ui *ui);
 
 void events_init_Home(lv_ui *ui);
-void events_init_Electricity(lv_ui *ui);
-void events_init_Firefighting(lv_ui *ui);
+void events_init_zigbee(lv_ui *ui);
 
 #ifdef __cplusplus
 }

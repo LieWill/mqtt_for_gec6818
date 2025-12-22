@@ -27,11 +27,15 @@ extern "C" {
  *********************/
 
 /* MQTT配置默认值 */
-#define MQTT_DEFAULT_HOST       "47.107.34.158"
-#define MQTT_DEFAULT_PORT       1883
-#define MQTT_DEFAULT_TOPIC      "stm32/sensor/data"
-#define MQTT_DEFAULT_USERNAME   "stm32"
-#define MQTT_DEFAULT_PASSWORD   "123456"
+#define MQTT_DEFAULT_HOST           "47.107.34.158"
+#define MQTT_DEFAULT_PORT           1883
+#define MQTT_DEFAULT_TOPIC          "stm32/sensor/data"
+#define MQTT_DEFAULT_CONTROL_TOPIC  "stm32/control"
+#define MQTT_DEFAULT_USERNAME       "stm32"
+#define MQTT_DEFAULT_PASSWORD       "123456"
+
+/* ZigBee主题 */
+#define MQTT_ZIGBEE_TOPIC           "zigbee/sensor/data"
 
 /* 缓冲区大小 */
 #define MQTT_CMD_BUF_SIZE       512
@@ -61,6 +65,25 @@ typedef struct {
 } mqtt_sensor_data_t;
 
 /**
+ * @brief ZigBee传感器数据结构体
+ * JSON格式: {"mac":"00124B0004284E1E","illumination":1081,"temperature":21.43,
+ *            "humidity":77.32,"dew_point":17.29,"human_detected":false,
+ *            "vibration":false,"count":95}
+ */
+typedef struct {
+    char mac[20];           /**< 设备MAC地址 */
+    uint32_t illumination;  /**< 光照强度 (Lux) */
+    float temperature;      /**< 温度值 (摄氏度) */
+    float humidity;         /**< 湿度值 (百分比) */
+    float dew_point;        /**< 露点温度 (摄氏度) */
+    bool human_detected;    /**< 人体检测 */
+    bool vibration;         /**< 震动检测 */
+    uint32_t count;         /**< 数据包序列号 */
+    uint32_t timestamp;     /**< 时间戳 */
+    bool valid;             /**< 数据有效标志 */
+} mqtt_zigbee_data_t;
+
+/**
  * @brief MQTT配置结构体
  */
 typedef struct {
@@ -87,6 +110,13 @@ typedef void (*mqtt_raw_data_cb_t)(const char *data, void *user_data);
 typedef void (*mqtt_sensor_data_cb_t)(const mqtt_sensor_data_t *sensor_data, void *user_data);
 
 /**
+ * @brief ZigBee传感器数据回调函数类型
+ * @param zigbee_data 解析后的ZigBee传感器数据
+ * @param user_data 用户自定义数据
+ */
+typedef void (*mqtt_zigbee_data_cb_t)(const mqtt_zigbee_data_t *zigbee_data, void *user_data);
+
+/**
  * @brief MQTT客户端状态枚举
  */
 typedef enum {
@@ -106,10 +136,13 @@ typedef struct {
     mqtt_state_t state;                 /**< 客户端状态 */
     mqtt_raw_data_cb_t raw_cb;          /**< 原始数据回调 */
     mqtt_sensor_data_cb_t sensor_cb;    /**< 传感器数据回调 */
+    mqtt_zigbee_data_cb_t zigbee_cb;    /**< ZigBee数据回调 */
     void *user_data;                    /**< 用户自定义数据 */
     mqtt_sensor_data_t last_data;       /**< 最新的传感器数据 */
+    mqtt_zigbee_data_t last_zigbee_data;/**< 最新的ZigBee传感器数据 */
     volatile bool running;              /**< 运行标志 */
     void *thread_handle;                /**< 线程句柄 (内部使用) */
+    void *zigbee_thread_handle;         /**< ZigBee订阅线程句柄 */
 } mqtt_client_t;
 
 /**********************
@@ -196,6 +229,49 @@ int mqtt_client_get_last_data(mqtt_client_t *client, mqtt_sensor_data_t *data);
  * @return true解析成功，false解析失败
  */
 bool mqtt_parse_sensor_json(const char *json_str, mqtt_sensor_data_t *data);
+
+/**
+ * @brief 解析ZigBee传感器JSON数据
+ * @param json_str JSON字符串
+ * @param data 解析结果输出指针
+ * @return true解析成功，false解析失败
+ */
+bool mqtt_parse_zigbee_json(const char *json_str, mqtt_zigbee_data_t *data);
+
+/**
+ * @brief 注册ZigBee传感器数据回调函数
+ * @param client 客户端句柄指针
+ * @param callback 回调函数
+ * @param user_data 用户自定义数据
+ * @return MQTT_OK成功，其他表示错误
+ */
+int mqtt_client_set_zigbee_callback(mqtt_client_t *client, mqtt_zigbee_data_cb_t callback, void *user_data);
+
+/**
+ * @brief 获取最新的ZigBee传感器数据
+ * @param client 客户端句柄指针
+ * @param data 数据输出指针
+ * @return MQTT_OK成功，其他表示错误
+ */
+int mqtt_client_get_last_zigbee_data(mqtt_client_t *client, mqtt_zigbee_data_t *data);
+
+/**
+ * @brief 发布MQTT消息
+ * @param client 客户端句柄指针
+ * @param topic 发布主题 (如果为NULL则使用默认控制主题 stm32/control)
+ * @param message 发布的消息内容
+ * @return MQTT_OK成功，其他表示错误
+ */
+int mqtt_client_publish(mqtt_client_t *client, const char *topic, const char *message);
+
+/**
+ * @brief 发布LED控制JSON消息
+ * @param client 客户端句柄指针
+ * @param led_name LED名称，如 "led1", "led2" 等
+ * @param state LED状态: true=打开, false=关闭
+ * @return MQTT_OK成功，其他表示错误
+ */
+int mqtt_client_publish_led(mqtt_client_t *client, const char *led_name, bool state);
 
 /**
  * @brief 反初始化MQTT客户端

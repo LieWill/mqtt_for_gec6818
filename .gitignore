@@ -58,7 +58,6 @@ output/
 
 # Fonts and images
 *.ttc
-*.c
 
 # IDE specific files
 .vscode/
